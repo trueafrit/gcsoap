@@ -589,7 +589,26 @@ func GC_SendSvodka(data []byte) ([]byte, error) {
 		return response, err
 	}
 
+	type InnerResult struct {
+		Value string `xml:",innerxml"`
+	}
+	type Result struct {
+		B InnerResult `xml:"Body"`
+	}
+	bdy := Result{InnerResult{""}}
+
 	err = checkXMLResponseForError(response)
+
+	err2 := xml.Unmarshal(response, &bdy)
+	if err2 != nil {
+		log.Error("Parse response error: ", err2)
+	}
+
+	log.Trace("Parse body: ", bdy.B.Value)
+
+	if len(bdy.B.Value) > 0 {
+		response = []byte(bdy.B.Value)
+	}
 
 	if err != nil {
 		log.Error("RESPONSE:\n", string(response), "\nWITH ERROR", err)
